@@ -5,6 +5,23 @@ import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
+//companys add their staffs batch adding and single adding
+
+
+
+//companys pay their staff batch payment
+
+//companys deposit money to the contract
+
+//comapanys withdraw money 
+
+//we mint nft to best staff
+
+//staff mark attendance
+
+//role giving
+//Add admin
+
 contract payboxDashboard is ERC721, ERC721URIStorage {
     IERC20 public token;
 
@@ -32,17 +49,31 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 
     address[] allStaffs;
     string URI;
+    string companyName;
+    string companyLogo;
     uint256 lastPayOut;
     uint256 TotalPayOut;
+
+    // Event
+    event staffRemove(string indexed name );
+    event AmountPaidout(uint256 indexed amount, uint256 indexed timePaid);
+    event bestStaff(string indexed name, address indexed bestStaff, uint256 indexed nftId);
+    event tokenDeposit(uint256 indexed _amount, uint256 time);
+    event withdrawToken(uint256 indexed _amount, address indexed receiver, uint256 indexed time);
+
 
     constructor(
         address _tokenAddress,
         string memory _nftName,
         string memory _nftSymbol,
-        string memory uri
+        string memory uri,
+        string memory   _companyName  ,
+    string memory _companyLogo
     ) ERC721(_nftName, _nftSymbol) {
         token = IERC20(_tokenAddress);
         URI = uri;
+       companyName = _companyName;
+    companyLogo = _companyLogo;
     }
 
     //companys add their staffs batch adding and single adding
@@ -71,7 +102,9 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         }
         return true;
     }
-
+    /**
+    * @dev delete a particular staff data
+     */
     //companies remove staff
     function removeStaff(address _staff) external returns (bool) {
         require(staffLength[_staff] < allStaffs.length, "user not found");
@@ -87,10 +120,14 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         delete staffLength[_staff];
         delete Salary[_staff];
         profile[_staff] = Profile(address(0), '', '', 0, '');
+        emit staffRemove(profile[staff].myName);
+
         return true;
     }
 
-    //check total balance before payment payment
+    /**
+    * @dev return amount to pay all staffs
+     */
     function totalPayment() internal view returns (uint256) {
         uint totalAmount = 0;
         for (uint i = 0; i < allStaffs.length; i++) {
@@ -99,9 +136,12 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             require(amount > 0, "Amount must be greater than zero");
             totalAmount += amount;
         }
+        emit AmountPaidout(totalAmount, block.timestamp);
         return totalAmount;
     }
-
+/**
+* @dev check the best staff of the month
+ */
     function checkHighestAttendance() internal view returns (address) {
         uint highestAttendance = 0;
         address bestEmployee = address(0);
@@ -157,25 +197,31 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         tokenId = _tokenId;
         lastPayOut = totalAmount;
         TotalPayOut += totalAmount;
+        emit bestStaff(profile[bestEmployee].myName, bestEmployee, _tokenId);
         return true;
     }
 
-    function depositFund(uint256 amount) external returns (bool) {
-        require(token.balanceOf(msg.sender) >= amount, "Insufficient balance");
+    function depositFund(uint256 _amount) external returns (bool) {
+        require(token.balanceOf(msg.sender) >= _amount, "Insufficient balance");
         token.transfer(address(this), amount);
+        emit tokenDeposit(_amount, block.timestamp);
         return true;
     }
 
-    function withdrawFund(address to, uint256 amount) external returns (bool) {
+    function withdrawFund(address to, uint256 _amount) external returns (bool) {
         require(
-            token.balanceOf(address(this)) >= amount,
+            token.balanceOf(address(this)) >= _amount,
             "Insufficient Amount"
         );
-        token.transfer(to, amount);
+        token.transfer(to, _amount);
+   
+        emit withdrawToken(_amount, to, block.timestamp );
         return true;
     }
 
-    //only contract owner
+   /**
+   *@dev instantiate a new attendance for the day
+    */
     function openAttendance() external returns (bool) {
         require(
             block.timestamp - lastResetTimestamp >= attendanceResetInterval,
@@ -204,10 +250,16 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         }
     }
 
-    function salaryPayout() external view returns (uint256, uint256) {
+    function salaryPaidout() external view returns (uint256, uint256) {
         return (lastPayOut,TotalPayOut);
     }
-    function allMembers() public returns(Profile[] memory){
+    function allMembers() external view returns(Profile[] memory){
+        Profile[] memory allProfiles = new Profile[](allStaffs.length);
+
+        for(uint256 i = 0; i < allStaffs.length; i++ ){
+            allProfiles[i] = profile[allStaffs[i]];
+        }
+        return allProfiles;
 
     }
 }

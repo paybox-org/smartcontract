@@ -1,19 +1,44 @@
-// companys create account :factory contract
+// SPDX-License_Identifier: MIT
 
+pragma solidity ^0.8.21;
+import "./payboxDashboard.sol";
 
-//companys add their staffs batch adding and single adding
+contract paybox {
+    mapping(address => address) myAccount;
+    mapping(address => bool) userExist;
 
+    //Event
+    event AccountCreated(address indexed caller, address indexed _factory);
 
+    /**
+    * @dev create an instance of paybox dashoard for the user
+     */
 
-//companys pay their staff batch payment
+    // companys create account :factory contract
+    function createAccount(
+        address _tokenAddress,
+        string memory _nftName,
+        string memory _nftSymbol,
+        string memory _Nfturi,
+        string memory _companyName,
+        string memory _companyLogo
+    ) external returns (bool) {
+        address _caller = msg.sender;
+        require(!userExist[_caller], "user account created");
+        payboxDashboard myAcct = new payboxDashboard(
+            _tokenAddress,
+            _nftName,
+            _nftSymbol,
+            _Nfturi,
+            _companyName,
+            _companyLogo
+        );
+        myAccount[_caller] = address(myAcct);
+       emit AccountCreated(_caller, address(myAcct));
+        return true;
+    }
 
-//companys deposit money to the contract
-
-//comapanys withdraw money 
-
-//we mint nft to best staff
-
-//staff mark attendance
-
-//role giving
-//Add admin
+    function showMyAcct(address _owner) external view returns (address) {
+        return myAccount[_owner];
+    }
+}
