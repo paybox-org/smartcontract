@@ -23,6 +23,7 @@ import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorag
 //Add admin
 
 contract payboxDashboard is ERC721, ERC721URIStorage {
+        /* ========== STATE VARIABLES  ========== */
     IERC20 public token;
 
     mapping(address => uint256) Salary;
@@ -51,32 +52,38 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     string URI;
     string companyName;
     string companyLogo;
+    string email;
     uint256 lastPayOut;
     uint256 TotalPayOut;
 
-    // Event
+       /* ========== Event ========== */
     event staffRemove(string indexed name );
     event AmountPaidout(uint256 indexed amount, uint256 indexed timePaid);
     event bestStaff(string indexed name, address indexed bestStaff, uint256 indexed nftId);
     event tokenDeposit(uint256 indexed _amount, uint256 time);
     event withdrawToken(uint256 indexed _amount, address indexed receiver, uint256 indexed time);
 
-
+ /* ========== INITIALIZER ========== */
     constructor(
         address _tokenAddress,
         string memory _nftName,
         string memory _nftSymbol,
         string memory uri,
         string memory   _companyName  ,
-    string memory _companyLogo
+    string memory _companyLogo,
+    string memory _email
     ) ERC721(_nftName, _nftSymbol) {
         token = IERC20(_tokenAddress);
         URI = uri;
        companyName = _companyName;
     companyLogo = _companyLogo;
+    email = _email;
     }
 
-    //companys add their staffs batch adding and single adding
+/**
+* @dev  companys add their staffs batch adding and single adding
+*/
+   
     function addStaff(
         address[] calldata _staffAdresses,
         uint256[] calldata _amount,
@@ -120,11 +127,12 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         delete staffLength[_staff];
         delete Salary[_staff];
         profile[_staff] = Profile(address(0), '', '', 0, '');
-        emit staffRemove(profile[staff].myName);
+        emit staffRemove(profile[_staff].myName);
 
         return true;
     }
 
+/* ========== VIEWS ========== */
     /**
     * @dev return amount to pay all staffs
      */
@@ -136,9 +144,10 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             require(amount > 0, "Amount must be greater than zero");
             totalAmount += amount;
         }
-        emit AmountPaidout(totalAmount, block.timestamp);
+        
         return totalAmount;
     }
+       /* ========== PRIVATE FUNCTIONS ========== */
 /**
 * @dev check the best staff of the month
  */
@@ -198,12 +207,13 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         lastPayOut = totalAmount;
         TotalPayOut += totalAmount;
         emit bestStaff(profile[bestEmployee].myName, bestEmployee, _tokenId);
+        emit AmountPaidout(totalAmount, block.timestamp);
         return true;
     }
 
     function depositFund(uint256 _amount) external returns (bool) {
         require(token.balanceOf(msg.sender) >= _amount, "Insufficient balance");
-        token.transfer(address(this), amount);
+        token.transfer(address(this), _amount);
         emit tokenDeposit(_amount, block.timestamp);
         return true;
     }
@@ -253,6 +263,9 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     function salaryPaidout() external view returns (uint256, uint256) {
         return (lastPayOut,TotalPayOut);
     }
+    /**
+    * @dev returns all registered staff
+     */
     function allMembers() external view returns(Profile[] memory){
         Profile[] memory allProfiles = new Profile[](allStaffs.length);
 
@@ -262,4 +275,10 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         return allProfiles;
 
     }
+    /**
+    * @dev return companyDetails
+     */
+     function companydetails() external view returns(string memory, string memory, string memory){
+        return(companyName, companyLogo, email);
+     }
 }

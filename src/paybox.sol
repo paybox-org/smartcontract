@@ -21,7 +21,8 @@ contract paybox {
         string memory _nftSymbol,
         string memory _Nfturi,
         string memory _companyName,
-        string memory _companyLogo
+        string memory _companyLogo,
+        string memory _email
     ) external returns (bool) {
         address _caller = msg.sender;
         require(!userExist[_caller], "user account created");
@@ -31,7 +32,8 @@ contract paybox {
             _nftSymbol,
             _Nfturi,
             _companyName,
-            _companyLogo
+            _companyLogo, 
+            _email
         );
         myAccount[_caller] = address(myAcct);
        emit AccountCreated(_caller, address(myAcct));
