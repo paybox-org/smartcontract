@@ -78,6 +78,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
        companyName = _companyName;
     companyLogo = _companyLogo;
     email = _email;
+    lastResetTimestamp = 0;
     }
 
 /**
@@ -85,8 +86,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 */
    
     function addStaff(
-        address[] calldata _staffAdresses,
-        uint256[] calldata _amount,
+        address[] memory _staffAdresses,
+        uint256[] memory _amount,
         string[] memory _name,
         string[] memory _position,
         string[] memory _email
@@ -192,12 +193,12 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     function salaryPayment() external returns (bool) {
         uint totalAmount = totalPayment();
         address bestEmployee = checkHighestAttendance();
-        require(token.balanceOf(address(this)) >= totalAmount);
+        require(token.balanceOf(address(this)) >= totalAmount, 'Insufficient balance');
         for (uint i = 0; i < allStaffs.length; i++) {
             address to = allStaffs[i];
             uint amount = Salary[to];
             require(amount > 0, "Amount must be greater than zero");
-            token.transfer(to, amount);
+            token.transferFrom(address(this), to, amount);
         }
         uint256 _tokenId = tokenId + 1;
         safeMint(bestEmployee, URI, _tokenId);
@@ -213,7 +214,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 
     function depositFund(uint256 _amount) external returns (bool) {
         require(token.balanceOf(msg.sender) >= _amount, "Insufficient balance");
-        token.transfer(address(this), _amount);
+        token.transferFrom(msg.sender, address(this), _amount);
         emit tokenDeposit(_amount, block.timestamp);
         return true;
     }
@@ -249,7 +250,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 
     //user
 
-    function markAttendance() external {
+    function markAttendance() external returns(bool){
         require(attendanceMarked[msg.sender] == false, "Attendance marked");
         if (dailyAttendance == false) {
             dailyAttendance = true;
@@ -258,6 +259,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         } else {
             attendanceMarked[msg.sender] = true;
         }
+        return true;
     }
 
     function salaryPaidout() external view returns (uint256, uint256) {
