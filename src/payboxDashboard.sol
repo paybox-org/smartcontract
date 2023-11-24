@@ -5,25 +5,8 @@ import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
-//companys add their staffs batch adding and single adding
-
-
-
-//companys pay their staff batch payment
-
-//companys deposit money to the contract
-
-//comapanys withdraw money 
-
-//we mint nft to best staff
-
-//staff mark attendance
-
-//role giving
-//Add admin
-
 contract payboxDashboard is ERC721, ERC721URIStorage {
-        /* ========== STATE VARIABLES  ========== */
+    /* ========== STATE VARIABLES  ========== */
     IERC20 public token;
 
     mapping(address => uint256) Salary;
@@ -55,46 +38,144 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     string email;
     uint256 lastPayOut;
     uint256 TotalPayOut;
+    address owner;
 
-       /* ========== Event ========== */
-    event staffRemove(string indexed name );
+    /* ========== Event ========== */
+    event staffRemove(string indexed name);
     event AmountPaidout(uint256 indexed amount, uint256 indexed timePaid);
-    event bestStaff(string indexed name, address indexed bestStaff, uint256 indexed nftId);
+    event bestStaff(
+        string indexed name,
+        address indexed bestStaff,
+        uint256 indexed nftId
+    );
     event tokenDeposit(uint256 indexed _amount, uint256 time);
-    event withdrawToken(uint256 indexed _amount, address indexed receiver, uint256 indexed time);
+    event withdrawToken(
+        uint256 indexed _amount,
+        address indexed receiver,
+        uint256 indexed time
+    );
 
- /* ========== INITIALIZER ========== */
+    /* ========== INITIALIZER ========== */
     constructor(
         address _tokenAddress,
         string memory _nftName,
         string memory _nftSymbol,
         string memory uri,
-        string memory   _companyName  ,
-    string memory _companyLogo,
-    string memory _email
+        string memory _companyName,
+        string memory _companyLogo,
+        string memory _email, 
+        address _owner
     ) ERC721(_nftName, _nftSymbol) {
         token = IERC20(_tokenAddress);
         URI = uri;
-       companyName = _companyName;
-    companyLogo = _companyLogo;
-    email = _email;
-    lastResetTimestamp = 0;
+        companyName = _companyName;
+        companyLogo = _companyLogo;
+        email = _email;
+        lastResetTimestamp = 0;
+        owner = _owner ;
     }
 
-/**
-* @dev  companys add their staffs batch adding and single adding
-*/
-   
+    modifier _onlyOwner() {
+        require(msg.sender == owner, "NOT_OWNER");
+        _;
+    }
+
+    /* ========== PRIVATE FUNCTIONS ========== */
+    // The following functions are overrides required by Solidity.
+    function safeMint(
+        address to,
+        string memory uri,
+        uint256 _tokenId
+    ) internal {
+        _safeMint(to, _tokenId);
+        _setTokenURI(_tokenId, uri);
+    }
+
+    /**
+     * @dev check the best staff of the month
+     */
+    function checkHighestAttendance() internal view returns (address) {
+        uint highestAttendance = 0;
+        address bestEmployee = address(0);
+        for (uint i = 0; i < allStaffs.length; i++) {
+            address participant = allStaffs[i];
+            if (attendanceCounter[participant] > highestAttendance) {
+                highestAttendance = attendanceCounter[participant];
+                bestEmployee = participant;
+            }
+        }
+        return bestEmployee;
+    }
+
+    /**
+     * @dev return amount to pay all staffs
+     */
+    function totalPayment() internal view returns (uint256) {
+        uint totalAmount = 0;
+        for (uint i = 0; i < allStaffs.length; i++) {
+            address to = allStaffs[i];
+            uint amount = Salary[to];
+            require(amount > 0, "AMOUNT_IS_ZERO");
+            totalAmount += amount;
+        }
+
+        return totalAmount;
+    }
+
+    /* ========== VIEWS ========== */
+    function salaryPaidout() external view returns (uint256, uint256) {
+        return (lastPayOut, TotalPayOut);
+    }
+
+    /**
+     * @dev returns all registered staff
+     */
+    function allMembers() external view returns (Profile[] memory) {
+        Profile[] memory allProfiles = new Profile[](allStaffs.length);
+
+        for (uint256 i = 0; i < allStaffs.length; i++) {
+            allProfiles[i] = profile[allStaffs[i]];
+        }
+        return allProfiles;
+    }
+
+    /**
+     * @dev return companyDetails
+     */
+    function companyDetails()
+        external
+        view
+        returns (string memory, string memory, string memory)
+    {
+        return (companyName, companyLogo, email);
+    }
+
+    function tokenURI(
+        uint256 _tokenId
+    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(_tokenId);
+    }
+
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view override(ERC721, ERC721URIStorage) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @dev  companys add their staffs batch adding and single adding
+     */
+
     function addStaff(
         address[] memory _staffAdresses,
         uint256[] memory _amount,
         string[] memory _name,
         string[] memory _position,
         string[] memory _email
-    ) external returns (bool) {
+    ) external _onlyOwner returns (bool) {
         require(
             _staffAdresses.length == _amount.length,
-            "input addresses and amount must be equal"
+            "LENGTH_DOES_NOT_MATCH"
         );
         for (uint i = 0; i < _staffAdresses.length; i++) {
             Profile storage user = profile[_staffAdresses[i]];
@@ -110,11 +191,12 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         }
         return true;
     }
+
     /**
-    * @dev delete a particular staff data
+     * @dev delete a particular staff data
      */
     //companies remove staff
-    function removeStaff(address _staff) external returns (bool) {
+    function removeStaff(address _staff) external _onlyOwner returns (bool) {
         require(staffLength[_staff] < allStaffs.length, "user not found");
         uint indexToRemove = staffLength[_staff];
         uint lastIndex = allStaffs.length - 1;
@@ -127,83 +209,30 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         allStaffs.pop();
         delete staffLength[_staff];
         delete Salary[_staff];
-        profile[_staff] = Profile(address(0), '', '', 0, '');
+        profile[_staff] = Profile(address(0), "", "", 0, "");
         emit staffRemove(profile[_staff].myName);
 
         return true;
     }
 
-/* ========== VIEWS ========== */
-    /**
-    * @dev return amount to pay all staffs
-     */
-    function totalPayment() internal view returns (uint256) {
-        uint totalAmount = 0;
-        for (uint i = 0; i < allStaffs.length; i++) {
-            address to = allStaffs[i];
-            uint amount = Salary[to];
-            require(amount > 0, "Amount must be greater than zero");
-            totalAmount += amount;
-        }
-        
-        return totalAmount;
-    }
-       /* ========== PRIVATE FUNCTIONS ========== */
-/**
-* @dev check the best staff of the month
- */
-    function checkHighestAttendance() internal view returns (address) {
-        uint highestAttendance = 0;
-        address bestEmployee = address(0);
-        for (uint i = 0; i < allStaffs.length; i++) {
-            address participant = allStaffs[i];
-            if (attendanceCounter[participant] > highestAttendance) {
-                highestAttendance = attendanceCounter[participant];
-                bestEmployee = participant;
-            }
-        }
-        return bestEmployee;
-    }
-
-    function safeMint(
-        address to,
-        string memory uri,
-        uint256 _tokenId
-    ) internal {
-        _safeMint(to, _tokenId);
-        _setTokenURI(_tokenId, uri);
-    }
-
-    // The following functions are overrides required by Solidity.
-
-    function tokenURI(
-        uint256 _tokenId
-    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(_tokenId);
-    }
-
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view override(ERC721, ERC721URIStorage) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-
     //companys pay their staff batch payment
     //we have to check the date staff is been added
-    function salaryPayment() external returns (bool) {
+    function salaryPayment() external _onlyOwner returns (bool) {
         uint totalAmount = totalPayment();
         address bestEmployee = checkHighestAttendance();
-        require(token.balanceOf(address(this)) >= totalAmount, 'Insufficient balance');
+        require(
+            token.balanceOf(address(this)) >= totalAmount,
+            "Insufficient balance"
+        );
         for (uint i = 0; i < allStaffs.length; i++) {
             address to = allStaffs[i];
             uint amount = Salary[to];
-            require(amount > 0, "Amount must be greater than zero");
-            token.transferFrom(address(this), to, amount);
+            require(amount > 0, "AMOUNT_IS_ZERO");
+            token.transfer(to, amount);
         }
         uint256 _tokenId = tokenId + 1;
         safeMint(bestEmployee, URI, _tokenId);
-
-        _mint(bestEmployee, _tokenId);
+        // _mint(bestEmployee, _tokenId);
         tokenId = _tokenId;
         lastPayOut = totalAmount;
         TotalPayOut += totalAmount;
@@ -219,24 +248,27 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         return true;
     }
 
-    function withdrawFund(address to, uint256 _amount) external returns (bool) {
+    function withdrawFund(
+        address to,
+        uint256 _amount
+    ) external _onlyOwner returns (bool) {
         require(
             token.balanceOf(address(this)) >= _amount,
-            "Insufficient Amount"
+            "INSUFFICIENT_AMOUNT"
         );
         token.transfer(to, _amount);
-   
-        emit withdrawToken(_amount, to, block.timestamp );
+
+        emit withdrawToken(_amount, to, block.timestamp);
         return true;
     }
 
-   /**
-   *@dev instantiate a new attendance for the day
-    */
-    function openAttendance() external returns (bool) {
+    /**
+     *@dev instantiate a new attendance for the day
+     */
+    function openAttendance() external _onlyOwner returns (bool) {
         require(
             block.timestamp - lastResetTimestamp >= attendanceResetInterval,
-            "Not a new Day"
+            "NOT_A_NEW_DAY"
         );
 
         dailyAttendance = false;
@@ -250,7 +282,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 
     //user
 
-    function markAttendance() external returns(bool){
+    function markAttendance() external returns (bool) {
         require(attendanceMarked[msg.sender] == false, "Attendance marked");
         if (dailyAttendance == false) {
             dailyAttendance = true;
@@ -261,26 +293,4 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         }
         return true;
     }
-
-    function salaryPaidout() external view returns (uint256, uint256) {
-        return (lastPayOut,TotalPayOut);
-    }
-    /**
-    * @dev returns all registered staff
-     */
-    function allMembers() external view returns(Profile[] memory){
-        Profile[] memory allProfiles = new Profile[](allStaffs.length);
-
-        for(uint256 i = 0; i < allStaffs.length; i++ ){
-            allProfiles[i] = profile[allStaffs[i]];
-        }
-        return allProfiles;
-
-    }
-    /**
-    * @dev return companyDetails
-     */
-     function companydetails() external view returns(string memory, string memory, string memory){
-        return(companyName, companyLogo, email);
-     }
 }

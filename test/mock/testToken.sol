@@ -6,4 +6,7 @@ contract testToken is ERC20{
 constructor()ERC20('TestToken','TTT'){
         _mint(msg.sender, 1000*10**18);
 }
+function mintToken() public {
+        _mint(msg.sender, 1000*10**18);
+}
 }

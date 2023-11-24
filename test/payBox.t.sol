@@ -83,6 +83,7 @@ contract PayboxTest is Test {
         payboxDashboard myPAcct = payboxDashboard(myPayBox);
         myPAcct.addStaff(addresses, amounts, names, positions, emails);
         vm.stopPrank();
+        
     }
 
     function testRemoveAcct() public {
@@ -91,12 +92,12 @@ contract PayboxTest is Test {
         console.log(myPayBox);
 
         payboxDashboard myPAcct = payboxDashboard(myPayBox);
-
+    vm.prank(addr1);
         myPAcct.removeStaff(addr2);
         token.balanceOf(addr1);
         vm.startPrank(addr1);
-token.approve( address(myPAcct), 2000);
-        myPAcct.depositFund(8000);
+token.approve( address(myPAcct), 18000);
+        myPAcct.depositFund(18000);
 
         myPAcct.withdrawFund(addr1, 10);
         vm.warp(1 days);
@@ -113,7 +114,14 @@ token.approve( address(myPAcct), 2000);
         myPAcct.markAttendance();
         vm.prank(addr4);
         myPAcct.markAttendance();
+        token.balanceOf(address(myPAcct));
         vm.prank(addr1);
         myPAcct.salaryPayment();
+
+        vm.prank(addr1);
+        myPAcct.salaryPaidout();
+
+        myPAcct.allMembers();
+        myPAcct.companyDetails();
     }
 }
