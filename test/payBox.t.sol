@@ -23,13 +23,19 @@ contract PayboxTest is Test {
     address public addr3;
     address public addr4;
 
+   
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
-
+//   enum Interval {
+//         weekly,
+//         Biweekly,
+//         monthly
+//     }
     function setUp() public {
         addr1 = cheats.addr(1);
         vm.startPrank(addr1);
         token = new testToken();
         vm.stopPrank();
+     
 
         factory = new paybox();
         addr2 = cheats.addr(2);
@@ -45,7 +51,8 @@ contract PayboxTest is Test {
             "123qwqead",
             "VincedCompany",
             "123456788",
-            "abc@gmail.com"
+            "abc@gmail.com",
+            paybox.Interval(0)
         );
     }
 
@@ -74,15 +81,39 @@ contract PayboxTest is Test {
         emails[0] = "john@example.com";
         emails[1] = "alice@example.com";
         emails[2] = "bob@example.com";
-
+   vm.prank(addr2);
+        token.mintToken();
         vm.startPrank(addr1);
         CreateAccount();
+        
         address myPayBox = factory.showMyAcct(addr1);
         console.log(myPayBox);
 
         payboxDashboard myPAcct = payboxDashboard(myPayBox);
         myPAcct.addStaff(addresses, amounts, names, positions, emails);
         vm.stopPrank();
+        vm.startPrank(addr2);
+               factory.createAccount(
+            address(token),
+            "vinCompany",
+            "VCT",
+            "123qwqead",
+            "VincedCompany",
+            "123456788",
+            "abc@gmail.com",
+           paybox.Interval(0)
+        );
+        
+        address myPayBox2 = factory.showMyAcct(addr2);
+        console.log(myPayBox2);
+
+        payboxDashboard myPAcct2 = payboxDashboard(myPayBox2);
+        myPAcct2.addStaff(addresses, amounts, names, positions, emails);
+                vm.startPrank(addr2);
+token.approve( address(myPAcct2), 18000);
+        myPAcct2.depositFund(18000);
+        vm.stopPrank();
+
         
     }
 
