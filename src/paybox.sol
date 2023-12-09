@@ -12,7 +12,7 @@ contract paybox {
         Interval interval;
     }
     enum Interval {
-        weekly,
+        daily,
         Biweekly,
         monthly
     }
@@ -51,8 +51,8 @@ contract paybox {
         address _accountCreated = address(myAcct);
         myAccount[_caller] = address(myAcct);
         uint256 _schedulePayment;
-        if (_interval == Interval.weekly) {
-            _schedulePayment = block.timestamp + 7 days;
+        if (_interval == Interval.daily) {
+            _schedulePayment = block.timestamp + 1 hours;
         } else if (_interval == Interval.Biweekly) {
             _schedulePayment = block.timestamp + 14 days;
         } else {
@@ -75,8 +75,8 @@ contract paybox {
             if (details.FutureTime < block.timestamp) {
                 return;
             } else {
-                if (details.interval == Interval.weekly) {
-                    details.FutureTime = block.timestamp + 7 days;
+                if (details.interval == Interval.daily) {
+                    details.FutureTime = block.timestamp + 1 hours;
                 } else if (details.interval == Interval.Biweekly) {
                     details.FutureTime = block.timestamp + 14 days;
                 } else {

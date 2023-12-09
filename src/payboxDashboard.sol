@@ -28,7 +28,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 
     uint256 lastResetTimestamp;
 
-    uint256 attendanceResetInterval = 1 days;
+    uint256 attendanceResetInterval = 1 hours;
     uint256 tokenId = 0;
 
     address[] allStaffs;
@@ -233,13 +233,14 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             require(amount > 0, "AMOUNT_IS_ZERO");
             token.transfer(to, amount);
         }
+          Profile storage user = profile[bestEmployee];
         uint256 _tokenId = tokenId + 1;
         safeMint(bestEmployee, URI, _tokenId);
         // _mint(bestEmployee, _tokenId);
         tokenId = _tokenId;
         lastPayOut = totalAmount;
         TotalPayOut += totalAmount;
-        emit bestStaff(address(this), profile[bestEmployee].myName, bestEmployee, _tokenId);
+        emit bestStaff(address(this), user.myName, bestEmployee, _tokenId);
         emit AmountPaidout(address(this), totalAmount, block.timestamp);
         return true;
     }
