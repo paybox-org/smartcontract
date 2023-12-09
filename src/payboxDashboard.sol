@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.21;
-import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
-import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import "../lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract payboxDashboard is ERC721, ERC721URIStorage {
     /* ========== STATE VARIABLES  ========== */
@@ -63,7 +63,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         string memory uri,
         string memory _companyName,
         string memory _companyLogo,
-        string memory _email, 
+        string memory _email,
         address _owner
     ) ERC721(_nftName, _nftSymbol) {
         token = IERC20(_tokenAddress);
@@ -72,7 +72,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         companyLogo = _companyLogo;
         email = _email;
         lastResetTimestamp = 0;
-        owner = _owner ;
+        owner = _owner;
     }
 
     modifier _onlyOwner() {
@@ -92,7 +92,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     }
 
     /**
-     * @dev check the best staff of the month
+     * @dev Internal func 
+     * @return address of highest attendance
      */
     function checkHighestAttendance() internal view returns (address) {
         uint highestAttendance = 0;
@@ -108,7 +109,9 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     }
 
     /**
-     * @dev return amount to pay all staffs
+     * @dev internal func
+     * @return total token uint to be paid out
+     * 
      */
     function totalPayment() internal view returns (uint256) {
         uint totalAmount = 0;
@@ -123,12 +126,17 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     }
 
     /* ========== VIEWS ========== */
+    /**
+     * @dev Frontend require
+     * @return uint paid last, total uint paid out
+     */
     function salaryPaidout() external view returns (uint256, uint256) {
         return (lastPayOut, TotalPayOut);
     }
 
     /**
-     * @dev returns all registered staff
+     * @dev returns array of struct Profile 
+     * @return all registered staffs
      */
     function allMembers() external view returns (Profile[] memory) {
         Profile[] memory allProfiles = new Profile[](allStaffs.length);
@@ -140,7 +148,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     }
 
     /**
-     * @dev return companyDetails
+     * @dev return strings
+     * @return company info in strings
      */
     function companyDetails()
         external
@@ -150,6 +159,11 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         return (companyName, companyLogo, email);
     }
 
+    /**
+     * @dev ERC721 tokenURI func
+     * @param _tokenId  ERC721 Token ID
+     * 
+     */
     function tokenURI(
         uint256 _tokenId
     ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
@@ -163,39 +177,47 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     }
 
     /**
-     * @dev  companys add their staffs batch adding and single adding
+     * @dev  add struct Profile in Single && Batch
+     * @param _staffAddresses address(s) of staff(s)
+     * @param _amount salary in uint
+     * @param _name string of staff(s)
+     * @param _position level of staff(s)
+     * @param _email of staff(s)
+     * @return true if staff(s) added
      */
 
     function addStaff(
-        address[] memory _staffAdresses,
+        address[] memory _staffAddresses,
         uint256[] memory _amount,
         string[] memory _name,
         string[] memory _position,
         string[] memory _email
     ) external _onlyOwner returns (bool) {
         require(
-            _staffAdresses.length == _amount.length,
+            _staffAddresses.length == _amount.length,
             "LENGTH_DOES_NOT_MATCH"
         );
-        for (uint i = 0; i < _staffAdresses.length; i++) {
-            Profile storage user = profile[_staffAdresses[i]];
-            user.myAddress = _staffAdresses[i];
+        for (uint i = 0; i < _staffAddresses.length; i++) {
+            Profile storage user = profile[_staffAddresses[i]];
+            user.myAddress = _staffAddresses[i];
             user.myName = _name[i];
             user.position = _position[i];
             user.salary = _amount[i];
             user.email = _email[i];
-            allStaffs.push(_staffAdresses[i]);
-            staffLength[_staffAdresses[i]] = allStaffs.length - 1;
-            Salary[_staffAdresses[i]] = _amount[i];
-            dateAdded[_staffAdresses[i]] = block.timestamp;
+            allStaffs.push(_staffAddresses[i]);
+            staffLength[_staffAddresses[i]] = allStaffs.length - 1;
+            Salary[_staffAddresses[i]] = _amount[i];
+            dateAdded[_staffAddresses[i]] = block.timestamp;
         }
         return true;
     }
 
     /**
-     * @dev delete a particular staff data
+     * @dev delete a struct Profile // remove staff from company
+     * @param _staff address of staff to be removed
+     * @return bool 
+     * 
      */
-    //companies remove staff
     function removeStaff(address _staff) external _onlyOwner returns (bool) {
         require(staffLength[_staff] < allStaffs.length, "user not found");
         uint indexToRemove = staffLength[_staff];
@@ -215,8 +237,10 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         return true;
     }
 
-    //companys pay their staff batch payment
-    //we have to check the date staff is been added
+    /**
+     * @dev Batch token transfer func
+     * @return true if successful, false otherwise.
+     */
     function salaryPayment() external _onlyOwner returns (bool) {
         uint totalAmount = totalPayment();
         address bestEmployee = checkHighestAttendance();
@@ -232,7 +256,6 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         }
         uint256 _tokenId = tokenId + 1;
         safeMint(bestEmployee, URI, _tokenId);
-        // _mint(bestEmployee, _tokenId);
         tokenId = _tokenId;
         lastPayOut = totalAmount;
         TotalPayOut += totalAmount;
@@ -241,6 +264,10 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         return true;
     }
 
+    /**
+     * @dev tokenDeposit func for salary pay. 
+     * @param _amount  uint of token to be deposited
+     */
     function depositFund(uint256 _amount) external returns (bool) {
         require(token.balanceOf(msg.sender) >= _amount, "Insufficient balance");
         token.transferFrom(msg.sender, address(this), _amount);
@@ -248,6 +275,11 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         return true;
     }
 
+    /**
+     * @dev withdrawal func
+     * @param to address to be deposited to
+     * @param _amount  uint of token to be transferred
+     */
     function withdrawFund(
         address to,
         uint256 _amount
@@ -263,7 +295,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     }
 
     /**
-     *@dev instantiate a new attendance for the day
+     * @dev instantiate a new attendance for the day.
+     * @return a boolean
      */
     function openAttendance() external _onlyOwner returns (bool) {
         require(
@@ -280,8 +313,11 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         return true;
     }
 
-    //user
-
+    
+    /**
+     * @dev mark attendance called by staff(s)
+     * @return bool
+     */
     function markAttendance() external returns (bool) {
         require(attendanceMarked[msg.sender] == false, "Attendance marked");
         if (dailyAttendance == false) {

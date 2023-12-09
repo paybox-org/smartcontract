@@ -1,4 +1,4 @@
-// SPDX-License_Identifier: MIT
+// SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.21;
 import "./payboxDashboard.sol";
@@ -11,10 +11,12 @@ contract paybox {
     event AccountCreated(address indexed caller, address indexed _factory);
 
     /**
-    * @dev create an instance of paybox dashoard for the user
-     */
-
-    // companys create account :factory contract
+    * @dev create company account: factory child contract
+    * @notice an instance of paybox dashoard for the user
+    * @param _tokenAddress of ERC721, _nftSymbol, URI, _nftname of the ERC721
+    * @param _companyName, logo and email address in strings
+    * @return bool
+    */
     function createAccount(
         address _tokenAddress,
         string memory _nftName,
@@ -41,6 +43,11 @@ contract paybox {
         return true;
     }
 
+    /**
+     * @dev mapping of owner address to account created
+     * @param _owner address of account creator
+     * @return address of company account created
+     */
     function showMyAcct(address _owner) external view returns (address) {
         return myAccount[_owner];
     }
