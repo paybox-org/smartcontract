@@ -41,19 +41,22 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     address owner;
 
     /* ========== Event ========== */
-    event staffRemove(string indexed name);
-    event AmountPaidout(uint256 indexed amount, uint256 indexed timePaid);
+    event staffRemove(address _contract, string indexed name);
+    event AmountPaidout(address _contract, uint256 indexed amount, uint256 indexed timePaid);
     event bestStaff(
+        address _contract,
         string indexed name,
         address indexed bestStaff,
         uint256 indexed nftId
     );
-    event tokenDeposit(uint256 indexed _amount, uint256 time);
+    event tokenDeposit(address _contract, uint256 indexed _amount, uint256 time);
     event withdrawToken(
+        address _contract,
         uint256 indexed _amount,
         address indexed receiver,
         uint256 indexed time
     );
+    event AllAttendance(address _contract, address indexed _staff, string name, string position, string email, uint256 indexed _time);
 
     /* ========== INITIALIZER ========== */
     constructor(
@@ -113,7 +116,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
      * @return total token uint to be paid out
      * 
      */
-    function totalPayment() internal view returns (uint256) {
+    function totalPayment() public view returns (uint256) {
         uint totalAmount = 0;
         for (uint i = 0; i < allStaffs.length; i++) {
             address to = allStaffs[i];
@@ -232,7 +235,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         delete staffLength[_staff];
         delete Salary[_staff];
         profile[_staff] = Profile(address(0), "", "", 0, "");
-        emit staffRemove(profile[_staff].myName);
+        emit staffRemove(address(this), profile[_staff].myName);
 
         return true;
     }
@@ -259,8 +262,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         tokenId = _tokenId;
         lastPayOut = totalAmount;
         TotalPayOut += totalAmount;
-        emit bestStaff(profile[bestEmployee].myName, bestEmployee, _tokenId);
-        emit AmountPaidout(totalAmount, block.timestamp);
+        emit bestStaff(address(this), profile[bestEmployee].myName, bestEmployee, _tokenId);
+        emit AmountPaidout(address(this), totalAmount, block.timestamp);
         return true;
     }
 
@@ -271,7 +274,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     function depositFund(uint256 _amount) external returns (bool) {
         require(token.balanceOf(msg.sender) >= _amount, "Insufficient balance");
         token.transferFrom(msg.sender, address(this), _amount);
-        emit tokenDeposit(_amount, block.timestamp);
+        emit tokenDeposit(address(this), _amount, block.timestamp);
         return true;
     }
 
@@ -290,7 +293,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         );
         token.transfer(to, _amount);
 
-        emit withdrawToken(_amount, to, block.timestamp);
+        emit withdrawToken(address(this), _amount, to, block.timestamp);
         return true;
     }
 
@@ -327,6 +330,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         } else {
             attendanceMarked[msg.sender] = true;
         }
+        Profile storage user = profile[msg.sender];
+        emit AllAttendance(address(this), msg.sender, user.myName, user.email, user.position, block.timestamp);
         return true;
     }
 }

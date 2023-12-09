@@ -3,12 +3,13 @@
 pragma solidity ^0.8.21;
 import "./payboxDashboard.sol";
 
+
 contract paybox {
     mapping(address => address) myAccount;
     mapping(address => bool) userExist;
 
     //Event
-    event AccountCreated(address indexed caller, address indexed _factory);
+    event AccountCreated(address indexed caller, address indexed _child);
 
     /**
     * @dev create company account: factory child contract
@@ -25,7 +26,7 @@ contract paybox {
         string memory _companyName,
         string memory _companyLogo,
         string memory _email
-    ) external returns (bool) {
+    ) external returns (address) {
         address _caller = msg.sender;
         require(!userExist[_caller], "user account created");
         payboxDashboard myAcct = new payboxDashboard(
@@ -40,7 +41,7 @@ contract paybox {
         );
         myAccount[_caller] = address(myAcct);
        emit AccountCreated(_caller, address(myAcct));
-        return true;
+        return address(myAcct);
     }
 
     /**
@@ -50,5 +51,10 @@ contract paybox {
      */
     function showMyAcct(address _owner) external view returns (address) {
         return myAccount[_owner];
+    }
+
+    function payStaff() external returns(bool) {
+        address userAddr = myAccount[msg.sender];
+        return payboxDashboard(userAddr).salaryPayment();
     }
 }
