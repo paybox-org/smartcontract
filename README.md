@@ -93,7 +93,21 @@ https://book.getfoundry.sh/
 # Usage
 
 
-## Key Functions
+## Key Functions (PayBox Factory Contract)
+
+
+### showMyAcct
+
+The function showMyAcct is a public view function that takes an address parameter called _owner and returns an address value. It is a function in the payboxFactory contract. The purpose of this function is to retrieve the account address created by the specified _owner. The function takes the _owner address as input and returns the corresponding account address created by that _owner. This function is useful for users to retrieve their account address after creating an account using the createAccount function.
+
+**Parameters**
+
+The **_owner** parameter is an address value that represents the owner of the account. It is used to retrieve the account address created by the specified _owner.
+
+
+
+## Key Functions (PayBox Dashboard)
+
 ### Adding Staff (addStaff)
 
 **Purpose**: 
