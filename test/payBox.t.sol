@@ -119,7 +119,8 @@ token.approve( address(myPAcct), 18000);
         myPAcct.salaryPayment();
 
         vm.prank(addr1);
-        myPAcct.salaryPaidout();
+        factory.payStaff();
+        // myPAcct.salaryPaidout();
 
         myPAcct.allMembers();
         myPAcct.companyDetails();
