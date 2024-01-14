@@ -4,6 +4,8 @@ pragma solidity ^0.8.21;
 import "./payboxDashboard.sol";
 
 contract paybox {
+    IERC20 public immutable GHO_Contract;
+
     mapping(address => address) myAccount;
     mapping(address => bool) userExist;
     struct AddressPayment {
@@ -20,6 +22,10 @@ contract paybox {
 
     //Event
     event AccountCreated(address indexed caller, address indexed _child);
+
+    constructor(address _gho_contract) {
+        GHO_Contract = IERC20(_gho_contract);
+    }
 
     /**
      * @dev create an instance of paybox dashoard for the user
@@ -46,7 +52,8 @@ contract paybox {
             _companyName,
             _companyLogo,
             _email,
-            msg.sender
+            msg.sender,
+            GHO_Contract
         );
         address _accountCreated = address(myAcct);
         myAccount[_caller] = address(myAcct);

@@ -9,7 +9,7 @@ import "openzeppelin-contracts/interfaces/IERC4521.sol";
 contract payboxDashboard is ERC721, ERC721URIStorage {
     /* ========== STATE VARIABLES  ========== */
     IERC20 public token;
-
+    IERC20 public gho_contract
     mapping(address => uint256) Salary;
     mapping(address => uint256) staffLength;
     mapping(address => uint256) dateAdded;
@@ -21,8 +21,14 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         string position;
         uint256 salary;
         string email;
+        bool shareAcquisition;
+        uint sharesPercent;
+        uint sharesBalance;
     }
     mapping(address => Profile) profile;
+
+    //company total shares
+    uint public totalShares;
 
     bool dailyAttendance;
     mapping(address => uint256) attendanceCounter;
@@ -43,21 +49,36 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 
     /* ========== Event ========== */
     event staffRemove(address _contract, string indexed name);
-    event AmountPaidout(address _contract, uint256 indexed amount, uint256 indexed timePaid);
+    event AmountPaidout(
+        address _contract,
+        uint256 indexed amount,
+        uint256 indexed timePaid
+    );
     event bestStaff(
         address _contract,
         string indexed name,
         address indexed bestStaff,
         uint256 indexed nftId
     );
-    event tokenDeposit(address _contract, uint256 indexed _amount, uint256 time);
+    event tokenDeposit(
+        address _contract,
+        uint256 indexed _amount,
+        uint256 time
+    );
     event withdrawToken(
         address _contract,
         uint256 indexed _amount,
         address indexed receiver,
         uint256 indexed time
     );
-    event AllAttendance(address _contract, address indexed _staff, string name, string position, string email, uint256 indexed _time);
+    event AllAttendance(
+        address _contract,
+        address indexed _staff,
+        string name,
+        string position,
+        string email,
+        uint256 indexed _time
+    );
 
     /* ========== INITIALIZER ========== */
     constructor(
@@ -67,8 +88,9 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         string memory uri,
         string memory _companyName,
         string memory _companyLogo,
-        string memory _email, 
-        address _owner
+        string memory _email,
+        address _owner,
+        address _gho_contract
     ) ERC721(_nftName, _nftSymbol) {
         token = IERC20(_tokenAddress);
         URI = uri;
@@ -76,7 +98,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         companyLogo = _companyLogo;
         email = _email;
         lastResetTimestamp = 0;
-        owner = _owner ;
+        owner = _owner;
+        gho_contract = IERC20(_gho_contract);
     }
 
     modifier _onlyOwner() {
@@ -219,28 +242,104 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         return true;
     }
 
+    function buyShares(address _staff, uint _amount) public {
+        if(gho_contract.balanceOf(_staff) < _amount){
+        revert("Insufficient funds");
+        }
+
+        Profile storage user = profile[_staff];
+        /*
+        a = amount
+        B = balance of token before deposit
+        T = total supply
+        s = shares to mint
+
+        (T + s) / T = (a + B) / B 
+
+        s = aT / B
+        */
+        uint shares;
+        if (totalShares == 0) {
+            shares = _amount;
+        } else {
+            shares = (_amount * totalShares) / _gho_contract.balanceOf(address(this));
+        }
+
+        user.sharesBalance += shares;
+        totalShares+= shares;
+        {bool _sucess, _} =  _gho_contract.transferFrom(_staff, address(this), _amount);
+    }
+
+    function withdrawShares(address _staff, uint _shares) external {
+        Profile storage user = profile[_staff];
+
+        if(user.sharesBalance < _shares){
+        revert("Insufficient shares");
+        }
+
+         /*
+        a = amount
+        B = balance of token before withdraw
+        T = total supply
+        s = shares to burn
+
+        (T - s) / T = (B - a) / B 
+
+        a = sB / T
+        */
+        uint amount = (_shares * gho_contract.balanceOf(address(this))) / totalShares;
+        user.sharesBalance -= shares;
+        totalShares -= shares;
+        gho_contract.transfer(msg.sender, amount);
+    }
+
+    function toggleSharesAcquisition(address _staff, bool _toggle) external {
+        Profile storage user = profile[_staff];
+        user.shareAquisition = _toggle;
+    }
+
+    function setSharePercentage(address _staff, uint _percent) external {
+        Profile storage user = profile[_staff];
+        if(_percent < 10){
+            revert("Shares acquisition percent must be greater than 10")
+        }
+        if(user.shareAquisition == false){
+            revert("Shares acquisition status is Inactive")
+        }
+        user.sharesPercent = _percent;
+    }
+
     //companys pay their staff batch payment
     //we have to check the date staff is been added
     function salaryPayment() external returns (bool) {
         uint totalAmount = totalPayment();
         address bestEmployee = checkHighestAttendance();
         require(
-            token.balanceOf(address(this)) >= totalAmount,
+            gho_contract.balanceOf(address(this)) >= totalAmount,
             "Insufficient balance"
         );
         for (uint i = 0; i < allStaffs.length; i++) {
             address to = allStaffs[i];
             uint amount = Salary[to];
             require(amount > 0, "AMOUNT_IS_ZERO");
-            token.transfer(to, amount);
+
+        Profile storage user = profile[to];
+            if(user.shareAquisition == true) {
+                uint shares;
+                shares = (user.sharesPercent/amount * 100);
+                buyShares(to, shares);
+                gho_contract.transfer(to, amount - shares);
+            } else gho_contract.transfer(to, amount);
         }
-          Profile storage user = profile[bestEmployee];
+
+        Profile storage user = profile[bestEmployee];
         uint256 _tokenId = tokenId + 1;
         safeMint(bestEmployee, URI, _tokenId);
         // _mint(bestEmployee, _tokenId);
         tokenId = _tokenId;
         lastPayOut = totalAmount;
         TotalPayOut += totalAmount;
+        
         emit bestStaff(address(this), user.myName, bestEmployee, _tokenId);
         emit AmountPaidout(address(this), totalAmount, block.timestamp);
         return true;
@@ -297,7 +396,14 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             attendanceMarked[msg.sender] = true;
         }
         Profile storage user = profile[msg.sender];
-        emit AllAttendance(address(this), msg.sender, user.myName, user.email, user.position, block.timestamp);
+        emit AllAttendance(
+            address(this),
+            msg.sender,
+            user.myName,
+            user.email,
+            user.position,
+            block.timestamp
+        );
         return true;
     }
 }
