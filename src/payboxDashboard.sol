@@ -4,12 +4,12 @@ pragma solidity ^0.8.21;
 import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "openzeppelin-contracts/interfaces/IERC4521.sol";
+import "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 
 contract payboxDashboard is ERC721, ERC721URIStorage {
     /* ========== STATE VARIABLES  ========== */
     IERC20 public token;
-    IERC20 public gho_contract
+    IERC20 public gho_contract;
     mapping(address => uint256) Salary;
     mapping(address => uint256) staffLength;
     mapping(address => uint256) dateAdded;
@@ -236,78 +236,85 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         allStaffs.pop();
         delete staffLength[_staff];
         delete Salary[_staff];
-        profile[_staff] = Profile(address(0), "", "", 0, "");
+        // profile[_staff] = Profile(address(0), "", "", 0, "");
         emit staffRemove(address(this), profile[_staff].myName);
 
         return true;
     }
 
-    function buyShares(address _staff, uint _amount) public {
-        if(gho_contract.balanceOf(_staff) < _amount){
-        revert("Insufficient funds");
-        }
 
-        Profile storage user = profile[_staff];
-        /*
-        a = amount
-        B = balance of token before deposit
-        T = total supply
-        s = shares to mint
+/**
+* You must be a staff to buy shares
+ */
+    // function buyShares(address _staff, uint _amount) public {
+    //     if(gho_contract.balanceOf(_staff) < _amount){
+    //     revert("Insufficient funds");
+    //     }
 
-        (T + s) / T = (a + B) / B 
+    //     Profile storage user = profile[_staff];
+    //     /*
+    //     a = amount
+    //     B = balance of token before deposit
+    //     T = total supply
+    //     s = shares to mint
 
-        s = aT / B
-        */
-        uint shares;
-        if (totalShares == 0) {
-            shares = _amount;
-        } else {
-            shares = (_amount * totalShares) / _gho_contract.balanceOf(address(this));
-        }
+    //     (T + s) / T = (a + B) / B 
 
-        user.sharesBalance += shares;
-        totalShares+= shares;
-        {bool _sucess, _} =  _gho_contract.transferFrom(_staff, address(this), _amount);
-    }
+    //     s = aT / B
+    //     */
+    //     uint shares;
+    //     if (totalShares == 0) {
+    //         shares = _amount;
+    //     } else {
+    //         shares = (_amount * totalShares) / gho_contract.balanceOf(address(this));
+    //     }
 
-    function withdrawShares(address _staff, uint _shares) external {
-        Profile storage user = profile[_staff];
+    //     user.sharesBalance += shares;
+    //     totalShares+= shares;
+    //     // {bool _sucess, _} =  _gho_contract.transferFrom(_staff, address(this), _amount);
+    // }
+/**
+* Rules Governing shares removal 
+* Lock time
+ */
+    // function withdrawShares(address _staff, uint _shares) external {
+    //     Profile storage user = profile[_staff];
 
-        if(user.sharesBalance < _shares){
-        revert("Insufficient shares");
-        }
+    //     if(user.sharesBalance < _shares){
+    //     revert("Insufficient shares");
+    //     }
 
-         /*
-        a = amount
-        B = balance of token before withdraw
-        T = total supply
-        s = shares to burn
+    //      /*
+    //     a = amount
+    //     B = balance of token before withdraw
+    //     T = total supply
+    //     s = shares to burn
 
-        (T - s) / T = (B - a) / B 
+    //     (T - s) / T = (B - a) / B 
 
-        a = sB / T
-        */
-        uint amount = (_shares * gho_contract.balanceOf(address(this))) / totalShares;
-        user.sharesBalance -= shares;
-        totalShares -= shares;
-        gho_contract.transfer(msg.sender, amount);
-    }
+    //     a = sB / T
+    //     */
+    //     uint amount = (_shares * gho_contract.balanceOf(address(this))) / totalShares;
+    //     user.sharesBalance -= _shares;
+    //     totalShares -= _shares;
+    //     gho_contract.transfer(msg.sender, amount);
+    // }
 
-    function toggleSharesAcquisition(address _staff, bool _toggle) external {
-        Profile storage user = profile[_staff];
-        user.shareAquisition = _toggle;
-    }
+    // function toggleSharesAcquisition(address _staff, bool _toggle) external {
+    //     Profile storage user = profile[_staff];
+    //     user.shareAquisition = _toggle;
+    // }
 
-    function setSharePercentage(address _staff, uint _percent) external {
-        Profile storage user = profile[_staff];
-        if(_percent < 10){
-            revert("Shares acquisition percent must be greater than 10")
-        }
-        if(user.shareAquisition == false){
-            revert("Shares acquisition status is Inactive")
-        }
-        user.sharesPercent = _percent;
-    }
+    // function setSharePercentage(address _staff, uint _percent) external {
+    //     Profile storage user = profile[_staff];
+    //     if(_percent < 10){
+    //         revert("Shares acquisition percent must be greater than 10");
+    //     }
+    //     if(user.shareAquisition == false){
+    //         revert("Shares acquisition status is Inactive");
+    //     }
+    //     user.sharesPercent = _percent;
+    // }
 
     //companys pay their staff batch payment
     //we have to check the date staff is been added
@@ -323,13 +330,13 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             uint amount = Salary[to];
             require(amount > 0, "AMOUNT_IS_ZERO");
 
-        Profile storage user = profile[to];
-            if(user.shareAquisition == true) {
-                uint shares;
-                shares = (user.sharesPercent/amount * 100);
-                buyShares(to, shares);
-                gho_contract.transfer(to, amount - shares);
-            } else gho_contract.transfer(to, amount);
+        // Profile storage user = profile[to];
+            // if(user.shareAquisition == true) {
+            //     uint shares;
+            //     shares = (user.sharesPercent/amount * 100);
+            //     buyShares(to, shares);
+            //     gho_contract.transfer(to, amount - shares);
+            // } else gho_contract.transfer(to, amount);
         }
 
         Profile storage user = profile[bestEmployee];
@@ -345,6 +352,10 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         return true;
     }
 
+/**
+* @dev only Admin can call function
+* @param _amount the amount of GHO token you want to deposit
+ */
     function depositFund(uint256 _amount) external returns (bool) {
         require(token.balanceOf(msg.sender) >= _amount, "Insufficient balance");
         token.transferFrom(msg.sender, address(this), _amount);
@@ -403,7 +414,6 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             user.email,
             user.position,
             block.timestamp
-        );
-        return true;
+        );     return true;
     }
 }

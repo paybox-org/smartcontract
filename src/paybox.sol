@@ -53,7 +53,7 @@ contract paybox {
             _companyLogo,
             _email,
             msg.sender,
-            GHO_Contract
+            address(GHO_Contract)
         );
         address _accountCreated = address(myAcct);
         myAccount[_caller] = address(myAcct);
