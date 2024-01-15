@@ -316,41 +316,34 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     //     user.sharesPercent = _percent;
     // }
 
-    //companys pay their staff batch payment
-    //we have to check the date staff is been added
-    function salaryPayment() external returns (bool) {
-        uint totalAmount = totalPayment();
-        address bestEmployee = checkHighestAttendance();
-        require(
-            gho_contract.balanceOf(address(this)) >= totalAmount,
-            "Insufficient balance"
-        );
-        for (uint i = 0; i < allStaffs.length; i++) {
-            address to = allStaffs[i];
-            uint amount = Salary[to];
-            require(amount > 0, "AMOUNT_IS_ZERO");
+   
+    /**
+* @dev Batch token transfer func
+* @return true if successful, false otherwise.
+*/
+function salaryPayment() external _onlyOwner returns (bool) {
+uint totalAmount = totalPayment();
+address bestEmployee = checkHighestAttendance();
+require(
+token.balanceOf(address(this)) >= totalAmount,
+"Insufficient balance"
+);
+for (uint i = 0; i < allStaffs.length; i++) {
+address to = allStaffs[i];
+uint amount = Salary[to];
+require(amount > 0, "AMOUNT_IS_ZERO");
+token.transfer(to, amount);
+}
 
-        // Profile storage user = profile[to];
-            // if(user.shareAquisition == true) {
-            //     uint shares;
-            //     shares = (user.sharesPercent/amount * 100);
-            //     buyShares(to, shares);
-            //     gho_contract.transfer(to, amount - shares);
-            // } else gho_contract.transfer(to, amount);
-        }
-
-        Profile storage user = profile[bestEmployee];
-        uint256 _tokenId = tokenId + 1;
-        safeMint(bestEmployee, URI, _tokenId);
-        // _mint(bestEmployee, _tokenId);
-        tokenId = _tokenId;
-        lastPayOut = totalAmount;
-        TotalPayOut += totalAmount;
-        
-        emit bestStaff(address(this), user.myName, bestEmployee, _tokenId);
-        emit AmountPaidout(address(this), totalAmount, block.timestamp);
-        return true;
-    }
+uint256 _tokenId = tokenId + 1;
+safeMint(bestEmployee, URI, _tokenId);
+tokenId = _tokenId;
+lastPayOut = totalAmount;
+TotalPayOut += totalAmount;
+emit bestStaff(address(this), profile[bestEmployee].myName, bestEmployee, _tokenId);
+emit AmountPaidout(address(this), totalAmount, block.timestamp);
+return true;
+}
 
 /**
 * @dev only Admin can call function
