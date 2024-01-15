@@ -14,6 +14,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     mapping(address => uint256) staffLength;
     mapping(address => uint256) dateAdded;
     mapping(address => bool) attendanceMarked;
+    mapping(address=>bool) staffExist;
+    mapping(address => uint256) staffShares;
 
     struct Profile {
         address myAddress;
@@ -45,6 +47,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     string email;
     uint256 lastPayOut;
     uint256 TotalPayOut;
+    uint256 totalInvestment;
     address owner;
 
     /* ========== Event ========== */
@@ -104,6 +107,10 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 
     modifier _onlyOwner() {
         require(msg.sender == owner, "NOT_OWNER");
+        _;
+    }
+    modifier _onlyStaff() {
+        require(staffExist[msg.sender] == true, "NOT_STAFF");
         _;
     }
 
@@ -215,6 +222,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             staffLength[_staffAdresses[i]] = allStaffs.length - 1;
             Salary[_staffAdresses[i]] = _amount[i];
             dateAdded[_staffAdresses[i]] = block.timestamp;
+            staffExist[_staffAdresses[i]] = true;
         }
         return true;
     }
@@ -246,33 +254,38 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 /**
 * You must be a staff to buy shares
  */
-    // function buyShares(address _staff, uint _amount) public {
-    //     if(gho_contract.balanceOf(_staff) < _amount){
-    //     revert("Insufficient funds");
-    //     }
+    function buyShares(address _staff, uint _amount) public _onlyStaff {
 
-    //     Profile storage user = profile[_staff];
-    //     /*
-    //     a = amount
-    //     B = balance of token before deposit
-    //     T = total supply
-    //     s = shares to mint
+        if(token.balanceOf(_staff) < _amount){
+        revert("Insufficient funds");
+        }
 
-    //     (T + s) / T = (a + B) / B 
+        Profile storage user = profile[_staff];
+        /*
+        a = amount
+        B = balance of token before deposit
+        T = total supply
+        s = shares to mint
 
-    //     s = aT / B
-    //     */
-    //     uint shares;
-    //     if (totalShares == 0) {
-    //         shares = _amount;
-    //     } else {
-    //         shares = (_amount * totalShares) / gho_contract.balanceOf(address(this));
-    //     }
+        (T + s) / T = (a + B) / B 
 
-    //     user.sharesBalance += shares;
-    //     totalShares+= shares;
-    //     // {bool _sucess, _} =  _gho_contract.transferFrom(_staff, address(this), _amount);
-    // }
+        s = aT / B
+        */
+        uint shares;
+        if (totalShares == 0) {
+            shares = _amount;
+        } else {
+            shares = (_amount * totalShares) / totalInvestment;
+        }
+        // send the amount to aave contract
+        
+    staffShares[_staff] += shares;
+    totalInvestment += _amount;
+    totalShares+= shares;
+        user.sharesBalance += shares;
+
+        {bool _sucess, _} =  _gho_contract.transferFrom(_staff, address(this), _amount);
+    }
 /**
 * Rules Governing shares removal 
 * Lock time
