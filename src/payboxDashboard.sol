@@ -297,12 +297,12 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 * Rules Governing shares removal 
 * Lock time
  */
-    function withdrawShares(address _staff, uint _shares, address _asset) external _onlyStaff{
-        Profile storage user = profile[_staff];
+    function withdrawShares(address _staff, address _asset) external  returns(uint256){
+        // Profile storage user = profile[_staff];
 
-        if(user.sharesBalance < _shares){
-        revert("Insufficient shares");
-        }
+        // if(user.sharesBalance < _shares){
+        // revert("Insufficient shares");
+        // }
 
          /*
         a = amount
@@ -316,10 +316,11 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         */
         uint shares = staffShares[_staff];
         uint amount = (shares * totalInvestment) / totalShares;
-        aave_contract.withdraw(_asset, amount, _staff);
+        uint256 with = aave_contract.withdraw(_asset, amount, _staff);
         staffShares[_staff] =0;
          totalInvestment -= amount;
     totalShares-= shares;
+    return with;
 
         // user.sharesBalance -= _shares;
         // totalShares -= _shares;
