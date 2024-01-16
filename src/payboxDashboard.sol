@@ -5,11 +5,13 @@ import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
+import "./IAave.sol"
 
 contract payboxDashboard is ERC721, ERC721URIStorage {
     /* ========== STATE VARIABLES  ========== */
     IERC20 public token;
     IERC20 public gho_contract;
+    IERC20 public aave_contract;
     mapping(address => uint256) Salary;
     mapping(address => uint256) staffLength;
     mapping(address => uint256) dateAdded;
@@ -93,7 +95,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         string memory _companyLogo,
         string memory _email,
         address _owner,
-        address _gho_contract
+        address _aave_contract
     ) ERC721(_nftName, _nftSymbol) {
         token = IERC20(_tokenAddress);
         URI = uri;
@@ -102,7 +104,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         email = _email;
         lastResetTimestamp = 0;
         owner = _owner;
-        gho_contract = IERC20(_gho_contract);
+        aave_contract = IERC20(aave_contract);
     }
 
     modifier _onlyOwner() {
@@ -254,7 +256,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 /**
 * You must be a staff to buy shares
  */
-    function buyShares(address _staff, uint _amount) public _onlyStaff {
+    function buyShares(address _staff, uint _amount, address _asset) public _onlyStaff {
+        
 
         if(token.balanceOf(_staff) < _amount){
         revert("Insufficient funds");
@@ -278,7 +281,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             shares = (_amount * totalShares) / totalInvestment;
         }
         // send the amount to aave contract
-        
+    aave_contract.supply(_asset, _amount, _staff, 0);
     staffShares[_staff] += shares;
     totalInvestment += _amount;
     totalShares+= shares;
@@ -290,28 +293,29 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 * Rules Governing shares removal 
 * Lock time
  */
-    // function withdrawShares(address _staff, uint _shares) external {
-    //     Profile storage user = profile[_staff];
+    function withdrawShares(address _staff, uint _shares) external _onlyStaff{
+        Profile storage user = profile[_staff];
 
-    //     if(user.sharesBalance < _shares){
-    //     revert("Insufficient shares");
-    //     }
+        if(user.sharesBalance < _shares){
+        revert("Insufficient shares");
+        }
 
-    //      /*
-    //     a = amount
-    //     B = balance of token before withdraw
-    //     T = total supply
-    //     s = shares to burn
+         /*
+        a = amount
+        B = balance of token before withdraw
+        T = total supply
+        s = shares to burn
 
-    //     (T - s) / T = (B - a) / B 
+        (T - s) / T = (B - a) / B 
 
-    //     a = sB / T
-    //     */
-    //     uint amount = (_shares * gho_contract.balanceOf(address(this))) / totalShares;
-    //     user.sharesBalance -= _shares;
-    //     totalShares -= _shares;
-    //     gho_contract.transfer(msg.sender, amount);
-    // }
+        a = sB / T
+        */
+        uint shares = staffShares[_staff];
+        uint amount = (shares * gho_contract.balanceOf(address(this))) / totalShares;
+        user.sharesBalance -= _shares;
+        totalShares -= _shares;
+        gho_contract.transfer(msg.sender, amount);
+    }
 
     // function toggleSharesAcquisition(address _staff, bool _toggle) external {
     //     Profile storage user = profile[_staff];
