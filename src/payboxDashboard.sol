@@ -7,6 +7,7 @@ import "openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorag
 import "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 import "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import "./IAave.sol";
+import "./IBalance.sol";
 
 
 contract payboxDashboard is ERC721, ERC721URIStorage {
@@ -285,7 +286,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         // send the amount to aave contract
         IERC20(_asset).transferFrom(_staff, address(this), _amount);
         IERC20(_asset).approve(address(aave_contract), _amount);
-    aave_contract.supply(_asset, _amount, _staff, 0);
+    aave_contract.supply(_asset, _amount, address(this), 0);
     staffShares[_staff] += shares;
     totalInvestment += _amount;
     totalShares+= shares;
@@ -314,18 +315,35 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 
         a = sB / T
         */
+        address[] memory tokenAsset = new address[](1);
+        tokenAsset[0]= address(token);
+        address reward =0x29598b72eb5CeBd806C5dCD549490FdA35B13cD8;
         uint shares = staffShares[_staff];
-        uint amount = (shares * totalInvestment) / totalShares;
+        uint allInvestment = IBalance(0x29598b72eb5CeBd806C5dCD549490FdA35B13cD8).scaledBalanceOf(address(this));
+
+        uint contractInvestment = IBalance(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951).getUserRewards([tokenAsset], address(this), reward);
+
+   
+
+        // uint amount = (shares * totalInvestment) / totalShares;
+        uint amount = (shares * allInvestment) / totalShares;
+        // uint amount2 = (shares * totalInvestment) / totalShares;
+        // uint256 b = amount + amount2;
         uint256 with = aave_contract.withdraw(_asset, amount, _staff);
         staffShares[_staff] =0;
          totalInvestment -= amount;
     totalShares-= shares;
-    return with;
+    return allInvestment;
 
         // user.sharesBalance -= _shares;
         // totalShares -= _shares;
         // gho_contract.transfer(msg.sender, amount);
     }
+
+    /**
+    * @dev to borrow gho token 
+    * @dev only staff with shares can borrow
+     */
 
     // function toggleSharesAcquisition(address _staff, bool _toggle) external {
     //     Profile storage user = profile[_staff];

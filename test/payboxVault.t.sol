@@ -85,13 +85,15 @@ contract payboxVault is Test {
         addStaff();
         address paybox2 = factory.showMyAcct(owner);
         payboxDashboard myPAcct = payboxDashboard(paybox2);
-        uint256 amount = 20;
+        uint256 amount = 50000000;
         vm.startPrank(staff);
         testToken(daiToken).approve(paybox2, amount);
         myPAcct.buyShares(staff,amount , daiToken);
         
-        vm.warp(block.timestamp + 6 weeks );
-        myPAcct.withdrawShares(staff, daiToken);
+        vm.warp(block.timestamp + 50 weeks );
+        uint256 acct = myPAcct.withdrawShares(staff, daiToken);
+        console.log(acct);
+
         vm.stopPrank();
     }
 } 
