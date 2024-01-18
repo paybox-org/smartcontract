@@ -346,8 +346,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     }
 
     function depositFund(uint256 _amount) external returns (bool) {
-        require(token.balanceOf(msg.sender) >= _amount, "Insufficient balance");
-        token.transferFrom(msg.sender, address(this), _amount);
+        require(gho_contract.balanceOf(msg.sender) >= _amount, "Insufficient balance");
+        gho_contract.transferFrom(msg.sender, address(this), _amount);
         emit tokenDeposit(address(this), _amount, block.timestamp);
         return true;
     }
@@ -357,10 +357,10 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         uint256 _amount
     ) external _onlyOwner returns (bool) {
         require(
-            token.balanceOf(address(this)) >= _amount,
+            gho_contract.balanceOf(address(this)) >= _amount,
             "INSUFFICIENT_AMOUNT"
         );
-        token.transfer(to, _amount);
+        gho_contract.transfer(to, _amount);
 
         emit withdrawToken(address(this), _amount, to, block.timestamp);
         return true;
