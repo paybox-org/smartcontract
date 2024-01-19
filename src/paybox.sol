@@ -4,7 +4,7 @@ pragma solidity ^0.8.21;
 import "./payboxDashboard.sol";
 
 contract paybox {
-    IERC20 public immutable GHO_Contract;
+    address public immutable GHO_Contract;
 
     mapping(address => address) myAccount;
     mapping(address => bool) userExist;
@@ -24,7 +24,8 @@ contract paybox {
     event AccountCreated(address indexed caller, address indexed _child);
 
     constructor(address _gho_contract) {
-        GHO_Contract = IERC20(_gho_contract);
+        // GHO_Contract = IERC20(_gho_contract);
+        GHO_Contract = _gho_contract;
     }
 
     /**
