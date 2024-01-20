@@ -20,6 +20,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     mapping(address => bool) attendanceMarked;
     mapping(address => bool) staffExist;
     mapping(address => uint256) staffShares;
+    mapping(address => bool) borrowed;
 
     struct Profile {
         address myAddress;
@@ -346,11 +347,21 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         // gho_contract.transfer(msg.sender, amount);
     }
 
+
     /**
      * @dev to borrow gho token
      * @dev only staff with shares can borrow
      */
+     function lend() external{
+        
+     }
+/**
+* @dev payback loan
+ */
 
+ function paybackLoan() external{
+(, ,uint256 borrow, , , ) = aave_contract.getUserAccountData(address(this));
+ }
     // function toggleSharesAcquisition(address _staff, bool _toggle) external {
     //     Profile storage user = profile[_staff];
     //     user.shareAquisition = _toggle;

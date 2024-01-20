@@ -97,5 +97,13 @@ function supply(
   ) external returns (uint256);
 
 
+    function repayWithATokens(
+        address asset,
+        uint256 amount,
+        uint256 rateMode,
+        address onBehalfOf
+    ) external;
+
+  
     
 }
