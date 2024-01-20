@@ -8,8 +8,9 @@ import "openzeppelin-contracts/contracts/interfaces/IERC4626.sol";
 import "openzeppelin-contracts/contracts/interfaces/IERC20.sol";
 import "./IAave.sol";
 import "./IBalance.sol";
+import "./chainlinkOracle.sol";
 
-contract payboxDashboard is ERC721, ERC721URIStorage {
+contract payboxDashboard is ERC721, ERC721URIStorage, chainlinkOracle {
     /* ========== STATE VARIABLES  ========== */
     IERC20 public token;
     IERC20 public gho_contract;
@@ -21,6 +22,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     mapping(address => bool) staffExist;
     mapping(address => uint256) staffShares;
     mapping(address => uint256) staffLoan;
+    mapping(address => bool) borrowActive;
 
     struct Profile {
         address myAddress;
@@ -374,6 +376,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             _staff,
             desiredAmount
         );
+        borrowActive[_staff] = true;
 
         emit borrowGHO(desiredAmount, _staff);
     }
@@ -388,15 +391,51 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
 
         return allowedTokens;
     }
+/**
+*@dev Amount to payback
+ */
 
-    function paybackLoan() external {
-        (, , uint256 borrow, , , ) = aave_contract.getUserAccountData(
-            address(this)
-        );
+ function ghoPayback(address _staff) public view returns(uint256){
+    (
+            ,
+            uint256 totalDebtETH,
+            ,
+            uint256 currentLiquidationThreshold,
+            ,
+
+        ) = aave_contract.getUserAccountData(address(this));
 
         //staff loan out of the debt owned to aave
         uint repayableBal = staffLoan[_staff];
+        int usd = getChainlinkDataFeedLatestAnswer();
+        uint256 usdPrice = uint256(usd);
+
+        // uint256 stablePrice =( totalDebtETH * usdPrice)/1e8;
+        uint256 _totalToPayBack = (repayableBal / totalDebtETH) * totalDebtETH;
+        return _totalToPayBack;
+ }
+
+ /** 
+ *@dev payback loan
+  */
+    function paybackLoan(address _staff) external {
+    uint repayAmount = ghoPayback(_staff);
+        payGhoOwe( repayAmount);
+        borrowActive[_staff] = false;
+        staffLoan[_staff] = 0;
     }
+
+    /**
+    
+     */
+     function payGhoOwe( uint256 _repayAmount) internal {
+            aave_contract.repayWithATokens(
+            0xc4bF5CbDaBE595361438F8c6a187bDc330539c60,
+            _repayAmount,
+            2,
+            address(this)
+        );
+     }
 
     // function setSharePercentage(address _staff, uint _percent) external {
     //     Profile storage user = profile[_staff];
@@ -416,6 +455,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     function salaryPayment() external _onlyOwner returns (bool) {
         uint totalAmount = totalPayment();
         address bestEmployee = checkHighestAttendance();
+        uint payloan;
         require(
             token.balanceOf(address(this)) >= totalAmount,
             "Insufficient balance"
@@ -424,7 +464,18 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             address to = allStaffs[i];
             uint amount = Salary[to];
             require(amount > 0, "AMOUNT_IS_ZERO");
+            if(borrowActive[allStaffs[i]] == true){
+uint userLoan = ghoPayback(allStaffs[i]);
+payloan += userLoan;
+uint _balance = amount - userLoan;
+            token.transfer(to, _balance);
+            borrowActive[allStaffs[i]] = false;
+            staffLoan[allStaffs[i]] = 0;
+            }else{
             token.transfer(to, amount);
+
+            }
+
         }
 
         uint256 _tokenId = tokenId + 1;
@@ -432,6 +483,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         tokenId = _tokenId;
         lastPayOut = totalAmount;
         TotalPayOut += totalAmount;
+        if (payloan == 0){
+
         emit bestStaff(
             address(this),
             profile[bestEmployee].myName,
@@ -440,6 +493,18 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         );
         emit AmountPaidout(address(this), totalAmount, block.timestamp);
         return true;
+        }
+        else{
+payGhoOwe(payloan);
+        emit bestStaff(
+            address(this),
+            profile[bestEmployee].myName,
+            bestEmployee,
+            _tokenId
+        );
+        emit AmountPaidout(address(this), totalAmount, block.timestamp);
+        return true;
+        }
     }
 
     /**

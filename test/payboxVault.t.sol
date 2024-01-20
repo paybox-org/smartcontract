@@ -109,6 +109,8 @@ contract payboxVault is Test {
         vm.warp(block.timestamp + 50 weeks);
         uint balAfter = IERC20(0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357)
             .balanceOf(staff);
+           myPAcct.paybackLoan(staff);
+           
         uint t = myPAcct.borrowGHOTokens(staff, 1e4);
 
         // console.log(balBefore);
@@ -119,6 +121,7 @@ contract payboxVault is Test {
         vm.stopPrank();
     }
 }
+
 // forge create --rpc-url https://eth-sepolia.g.alchemy.com/v2/iAUaLtsNebgVs4nr_5VAOrrVmui6EZWB \
 //     --constructor-args 0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357 "JoNFT" "JFT" "euee" "joeCom" "Joee" "joe@gmail" 0x1b6e16403b06a51C42Ba339E356a64fE67348e92 0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951 \
 //     --private-key bd83404727a183edcc32ce0c9a7e07e004b179f65a14c8aca8f106e2cc73556a \
