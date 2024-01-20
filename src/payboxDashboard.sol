@@ -20,6 +20,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
     mapping(address => bool) attendanceMarked;
     mapping(address => bool) staffExist;
     mapping(address => uint256) staffShares;
+    mapping(address => uint256) staffLoan;
 
     struct Profile {
         address myAddress;
@@ -368,6 +369,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
             address(this)
         );
 
+        staffLoan[_staff] += desiredAmount;
         IERC20(0xc4bF5CbDaBE595361438F8c6a187bDc330539c60).transfer(
             _staff,
             desiredAmount
@@ -385,6 +387,15 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         uint allowedTokens = ((staffShares[_staff] / 100) * 20);
 
         return allowedTokens;
+    }
+
+    function paybackLoan() external {
+        (, , uint256 borrow, , , ) = aave_contract.getUserAccountData(
+            address(this)
+        );
+
+        //staff loan out of the debt owned to aave
+        uint repayableBal = staffLoan[_staff];
     }
 
     // function setSharePercentage(address _staff, uint _percent) external {
