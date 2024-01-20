@@ -72,6 +72,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         uint256 indexed _amount,
         uint256 time
     );
+    event borrowGHO(uint256 indexed amount, address onBehalfOf);
     event withdrawToken(
         address _contract,
         uint256 indexed _amount,
@@ -294,9 +295,6 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         aave_contract.supply(_asset, _amount, address(this), 0);
         staffShares[_staff] += shares;
         totalShares += shares;
-        // user.sharesBalance += shares;
-
-        // {bool _sucess, _} =  _gho_contract.transferFrom(_staff, address(this), _amount);
     }
 
     /**
@@ -340,10 +338,6 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
         staffShares[_staff] = 0;
         totalShares -= shares;
         return contractInvestment;
-
-        // user.sharesBalance -= _shares;
-        // totalShares -= _shares;
-        // gho_contract.transfer(msg.sender, amount);
     }
 
     /**
@@ -351,10 +345,47 @@ contract payboxDashboard is ERC721, ERC721URIStorage {
      * @dev only staff with shares can borrow
      */
 
-    // function toggleSharesAcquisition(address _staff, bool _toggle) external {
-    //     Profile storage user = profile[_staff];
-    //     user.shareAquisition = _toggle;
-    // }
+    function borrowGHOTokens(
+        address _staff,
+        uint desiredAmount
+    ) external returns (uint) {
+        if (staffShares[_staff] == 0) {
+            revert("You don't have shares");
+        }
+
+        //calculate 20%
+        uint allowedTokens = ((staffShares[_staff] / 100) * 20);
+
+        if (desiredAmount > allowedTokens) {
+            revert("Exceeded amount available for borrowing");
+        }
+
+        aave_contract.borrow(
+            0xc4bF5CbDaBE595361438F8c6a187bDc330539c60,
+            desiredAmount,
+            2,
+            0,
+            address(this)
+        );
+
+        IERC20(0xc4bF5CbDaBE595361438F8c6a187bDc330539c60).transfer(
+            _staff,
+            desiredAmount
+        );
+
+        emit borrowGHO(desiredAmount, _staff);
+    }
+
+    function previewEstimatedLoan(address _staff) external view returns (uint) {
+        if (staffShares[_staff] == 0) {
+            revert("You don't have shares");
+        }
+
+        //calculate 20%
+        uint allowedTokens = ((staffShares[_staff] / 100) * 20);
+
+        return allowedTokens;
+    }
 
     // function setSharePercentage(address _staff, uint _percent) external {
     //     Profile storage user = profile[_staff];

@@ -1,8 +1,9 @@
 // SPDX-License-Ideentifier: MIT
 
-pragma solidity ^0.8.21;
+pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
+import "../src/IERC20.sol";
 
 import {paybox} from "../src/paybox.sol";
 import {payboxDashboard} from "../src/payboxDashboard.sol";
@@ -75,19 +76,52 @@ contract payboxVault is Test {
         addStaff();
     }
 
-    function testbuyShares() public {
+    // function testbuyShares() public {
+    //     addStaff();
+    //     address paybox2 = factory.showMyAcct(owner);
+    //     payboxDashboard myPAcct = payboxDashboard(paybox2);
+    //     uint256 amount = 50000000;
+    //     vm.startPrank(staff);
+    //     testToken(daiToken).approve(paybox2, amount);
+    //     myPAcct.buyShares(staff, amount, daiToken);
+
+    //     vm.warp(block.timestamp + 50 weeks);
+    //     uint bal = myPAcct.withdrawShares(staff, daiToken);
+    //     console.log(bal);
+
+    //     vm.stopPrank();
+    // }
+
+    function testborrowGHO() public {
         addStaff();
         address paybox2 = factory.showMyAcct(owner);
         payboxDashboard myPAcct = payboxDashboard(paybox2);
-        uint256 amount = 50000000;
+        uint256 amount = 5e7;
         vm.startPrank(staff);
+
         testToken(daiToken).approve(paybox2, amount);
+
+        uint balBefore = IERC20(0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357)
+            .balanceOf(staff);
+
         myPAcct.buyShares(staff, amount, daiToken);
 
         vm.warp(block.timestamp + 50 weeks);
-        uint bal = myPAcct.withdrawShares(staff, daiToken);
-        console.log(bal);
+        uint balAfter = IERC20(0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357)
+            .balanceOf(staff);
+        uint t = myPAcct.borrowGHOTokens(staff, 1e4);
 
+        // console.log(balBefore);
+        // console.log(balBefore);
+        uint bal = IERC20(0xc4bF5CbDaBE595361438F8c6a187bDc330539c60).balanceOf(
+            staff
+        );
         vm.stopPrank();
     }
 }
+// forge create --rpc-url https://eth-sepolia.g.alchemy.com/v2/iAUaLtsNebgVs4nr_5VAOrrVmui6EZWB \
+//     --constructor-args 0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357 "JoNFT" "JFT" "euee" "joeCom" "Joee" "joe@gmail" 0x1b6e16403b06a51C42Ba339E356a64fE67348e92 0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951 \
+//     --private-key bd83404727a183edcc32ce0c9a7e07e004b179f65a14c8aca8f106e2cc73556a \
+//     --etherscan-api-key 8VWGCW9PI2P8QT1CTTDQPA5Y44YMMSJGCA \
+//     --verify \
+//     src/payboxDashboard.sol:payboxDashboard
