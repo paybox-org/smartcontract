@@ -21,7 +21,7 @@ contract payboxVault is Test {
     function setUp() public {
         uint mainnet = vm.createFork(
             "https://eth-sepolia.g.alchemy.com/v2/iAUaLtsNebgVs4nr_5VAOrrVmui6EZWB",
-            5096130
+            5121668
         );
         vm.selectFork(mainnet);
         factory = new paybox(gho);
@@ -96,22 +96,29 @@ contract payboxVault is Test {
         addStaff();
         address paybox2 = factory.showMyAcct(owner);
         payboxDashboard myPAcct = payboxDashboard(paybox2);
-        uint256 amount = 5e7;
+        uint256 amount = 12e18;
         vm.startPrank(staff);
-
         testToken(daiToken).approve(paybox2, amount);
+         testToken(daiToken).approve(gho, amount);
+
+
+
 
         uint balBefore = IERC20(0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357)
             .balanceOf(staff);
 
-        myPAcct.buyShares(staff, amount, daiToken);
+
+        myPAcct.buyShares(staff, 5e7, daiToken);
 
         vm.warp(block.timestamp + 50 weeks);
         uint balAfter = IERC20(0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357)
             .balanceOf(staff);
+           
+           
+        uint t = myPAcct.borrowGHOTokens(staff,0);
+           
            myPAcct.paybackLoan(staff);
            
-        uint t = myPAcct.borrowGHOTokens(staff, 1e4);
 
         // console.log(balBefore);
         // console.log(balBefore);

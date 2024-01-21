@@ -295,7 +295,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage, chainlinkOracle {
         // send the amount to aave contract
         IERC20(_asset).transferFrom(_staff, address(this), _amount);
         IERC20(_asset).approve(address(aave_contract), _amount);
-        aave_contract.supply(_asset, _amount, address(this), 0);
+        aave_contract.supply(_asset, _amount, msg.sender, 0);
         staffShares[_staff] += shares;
         totalShares += shares;
     }
@@ -368,7 +368,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage, chainlinkOracle {
             desiredAmount,
             2,
             0,
-            address(this)
+            msg.sender
         );
 
         staffLoan[_staff] += desiredAmount;
@@ -420,6 +420,8 @@ contract payboxDashboard is ERC721, ERC721URIStorage, chainlinkOracle {
   */
     function paybackLoan(address _staff) external {
     uint repayAmount = ghoPayback(_staff);
+        IERC20(0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357).transferFrom(_staff, address(this), repayAmount);
+        IERC20(0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357).approve(0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951, repayAmount);
         payGhoOwe( repayAmount);
         borrowActive[_staff] = false;
         staffLoan[_staff] = 0;
@@ -430,7 +432,7 @@ contract payboxDashboard is ERC721, ERC721URIStorage, chainlinkOracle {
      */
      function payGhoOwe( uint256 _repayAmount) internal {
             aave_contract.repayWithATokens(
-            0xc4bF5CbDaBE595361438F8c6a187bDc330539c60,
+            0xFF34B3d4Aee8ddCd6F9AFFFB6Fe49bD371b8a357,
             _repayAmount,
             2,
             address(this)
