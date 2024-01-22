@@ -28,7 +28,7 @@ A factory smart contract deployed on the [Polygon-zkevm](#https://testnet-zkevm.
 
     Aave GHO is a proposed stablecoin that operates within the Aave ecosystem. As a stablecoin, its value is pegged to a stable asset, typically the US Dollar, ensuring minimal volatility compared to other cryptocurrencies.GHO is typically collateralized by various other cryptocurrencies. Users can mint GHO by locking up their crypto assets as collateral in the Aave protocol. This process is essential for maintaining the stability and value of GHO.
 
--**[Aave Vault](#)**
+- **[Aave Vault](#)**
 
     The Aave vault system is a component of the platform, in relation to the functioning of GHO. They hold the collateralized assets that back the minted GHO stablecoins and serve as secure storage for the assets users deposit. These assets can be various cryptocurrencies, and they serve as collateral for borrowing or minting activities within the platform.
 
@@ -250,11 +250,10 @@ The Paybox contract is related to the following Ethereum Improvement Proposals (
 
 **ERC-721**: This is the standard for non-fungible tokens on the Ethereum network. The Paybox contract implements this to transfer non-fungible tokens, for company's award certification.
 
+**EIP-4337**: is a significant proposal in the Ethereum ecosystem. It introduces a concept known as "Account Abstraction." Unlike most Ethereum Improvement Proposals, EIP-4337 is not a change to the Ethereum protocol itself but rather a standard that can be implemented on top of the existing Ethereum infrastructure.
+
+**EIP-4626**: defines a standard API for vaults that hold a single type of ERC-20 token. This standardization makes it easier for different applications and protocols to interact with these vaults.
+
 ### Contract Addresses (Testnet)
-- **Polygon zkevm** : https://testnet-zkevm.polygonscan.com/address/0x55ab9da672143f1637be8072c3042f42ffe3cc03
-
-- **Sepolia** : https://sepolia.etherscan.io/address/0x32ad2bcae4c7a6fae0278930d9053cb2bc4bba77#writeContract
-
-#### Token
- - **Polygon zkevm** :https://testnet-zkevm.polygonscan.com/address/0xfc0bc66653d892534df9c2c4eb289e15b90b49cf
- - **Sepolia** : https://sepolia.etherscan.io/address/0xf80f593c828bfc4ead99897c6b780f539256d7ff#writeContract
+FACTORY
+- **Sepolia** : https://sepolia.etherscan.io/address/0xF758BE839a31D6C1C701c21F9b211a2c2AD4788B#writeContract
