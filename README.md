@@ -32,13 +32,12 @@ A factory smart contract deployed on the [Polygon-zkevm](#https://testnet-zkevm.
 
     The Aave vault system is a component of the platform, in relation to the functioning of GHO. They hold the collateralized assets that back the minted GHO stablecoins and serve as secure storage for the assets users deposit. These assets can be various cryptocurrencies, and they serve as collateral for borrowing or minting activities within the platform.
 
-- **[Polygon-zkevm](#https://testnet-zkevm.polygonscan.com/address/0x55ab9da672143f1637be8072c3042f42ffe3cc03)**
+- **[Ethereum sepolia](#https://sepolia.etherscan.io/address/0xF758BE839a31D6C1C701c21F9b211a2c2AD4788B#writeContract)**
 
-    Deploying the payBox smart contract on Polygon's Zero-Knowledge Ethereum Virtual Machine (ZK-EVM) harnesses the platform's enhanced scalability, reduced gas costs, and privacy features of zero-knowledge proofs, ideal for handling frequent, sensitive transactions like salary distributions. The EVM compatibility facilitates easy migration from Ethereum, leveraging familiar development tools while ensuring robust security. Additionally, Polygon's energy-efficient framework aligns with sustainable technology deployment, making it an optimal choice for payBox in balancing performance, cost-effectiveness, and environmental considerations.
 
-- **[ChainLink Automation](#https://docs.chain.link/chainlink-automation)**
+    Deploying the payBox smart contract on Sepolia Ethereum Virtual Machine 
 
-    Utilizing [ChainLink Automation](#https://docs.chain.link/chainlink-automation) for the payBox smart contract brings significant operational efficiency and reliability. [ChainLink Automation](#https://docs.chain.link/chainlink-automation) ensures critical functions within payBox, like periodic salary distributions and attendance resets, are executed autonomously and accurately, based on predefined condition(time-based trigger). This integration eliminates the need for manual interventions, reducing human error and streamlining the contract's functionality. Moreover, it leverages Chainlink's decentralized network, ensuring high availability and tamper-proof operations, crucial for maintaining the integrity of financial transactions and record-keeping in payBox. The use of Chainlink Automation thus enhances the overall robustness and effectiveness of the payBox contract's operations.
+
 
 
 
@@ -54,6 +53,8 @@ The Paybox contract has several key responsibilities:
 4. **Profile Management**: The contract stores a profile for each staff member. This includes the staff member's address, name, position, salary, and email.
 
 5. **Time Management**: The contract keeps track of the last time the attendance was reset. It also sets an interval for resetting the attendance.
+
+6. **Vault**: the contract serves as vault for registered members. Members tend to have shares when they save in the vault and earn interest. this savings in the vault is been sent to the Aave contract. Having shjares in the contract gives the members ability to get a loan in ***GHO*** token
 
 ## Interacting with the Contract
 Deploy the contract using a tool like Foundry, Hardhat or Remix, providing the necessary constructor parameters.
@@ -250,7 +251,6 @@ The Paybox contract is related to the following Ethereum Improvement Proposals (
 
 **ERC-721**: This is the standard for non-fungible tokens on the Ethereum network. The Paybox contract implements this to transfer non-fungible tokens, for company's award certification.
 
-**EIP-4337**: is a significant proposal in the Ethereum ecosystem. It introduces a concept known as "Account Abstraction." Unlike most Ethereum Improvement Proposals, EIP-4337 is not a change to the Ethereum protocol itself but rather a standard that can be implemented on top of the existing Ethereum infrastructure.
 
 **EIP-4626**: defines a standard API for vaults that hold a single type of ERC-20 token. This standardization makes it easier for different applications and protocols to interact with these vaults.
 
