@@ -24,6 +24,14 @@ Paybox front-end built with WAGMI, RainbowKit, and Vercel offers a robust interf
 #### Back-End
 A factory smart contract deployed on the [Polygon-zkevm](#https://testnet-zkevm.polygonscan.com/address/0x55ab9da672143f1637be8072c3042f42ffe3cc03) blockchain for a seamless and secure transactions. The execution of transactions (salary disbursment) leverages the [ChainLink Automation](#https://docs.chain.link/chainlink-automation), using time-based trigger.
 
+- **[Aave GHO](#)**
+
+    Aave GHO is a proposed stablecoin that operates within the Aave ecosystem. As a stablecoin, its value is pegged to a stable asset, typically the US Dollar, ensuring minimal volatility compared to other cryptocurrencies.GHO is typically collateralized by various other cryptocurrencies. Users can mint GHO by locking up their crypto assets as collateral in the Aave protocol. This process is essential for maintaining the stability and value of GHO.
+
+-**[Aave Vault](#)**
+
+    The Aave vault system is a component of the platform, in relation to the functioning of GHO. They hold the collateralized assets that back the minted GHO stablecoins and serve as secure storage for the assets users deposit. These assets can be various cryptocurrencies, and they serve as collateral for borrowing or minting activities within the platform.
+
 - **[Polygon-zkevm](#https://testnet-zkevm.polygonscan.com/address/0x55ab9da672143f1637be8072c3042f42ffe3cc03)**
 
     Deploying the payBox smart contract on Polygon's Zero-Knowledge Ethereum Virtual Machine (ZK-EVM) harnesses the platform's enhanced scalability, reduced gas costs, and privacy features of zero-knowledge proofs, ideal for handling frequent, sensitive transactions like salary distributions. The EVM compatibility facilitates easy migration from Ethereum, leveraging familiar development tools while ensuring robust security. Additionally, Polygon's energy-efficient framework aligns with sustainable technology deployment, making it an optimal choice for payBox in balancing performance, cost-effectiveness, and environmental considerations.
